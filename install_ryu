@@ -1,0 +1,17 @@
+從python 相關軟體開始
+  sudo apt-get install python-pip python-dev build-essential
+  sudo pip install --upgrade pip
+  
+Ryu安裝
+  sudo apt-get update
+  sudo apt-get install python-eventlet python-routes python-webob python-paramiko
+  git clone https://github.com/osrg/ryu.git
+  cd ryu; python ./setup.py install
+  sudo pip install ryu
+  sudo pip install six --upgrade
+  sudo pip install oslo.config
+  
+完成
+  ryu-manager
+
+注意: 要跑檔案的話路徑會影響錯誤訊息
