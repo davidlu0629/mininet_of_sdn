@@ -1,0 +1,21 @@
+Install mininet step by step:
+  1.將update upgrade
+    sudo apt update
+    sudo apt upgrade
+  
+  2.利用 git 下載 Mininet
+    sudo apt-get install git         //install git
+    git clone git://github.com/mininet/mininet
+  
+  3.進入mininet
+    cd mininet
+    
+  4.執行安裝
+    util/install.sh -a
+    
+    -a 全部安裝
+    -nfv 安裝 mininet，Openflow 和 Open vSwitch
+    -s mydir 選擇之後想儲存的目錄，而並非主目錄
+    
+  5.執行mininet
+    sudo mn
