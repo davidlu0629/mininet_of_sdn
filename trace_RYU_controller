@@ -15,18 +15,73 @@ class RyuApp(object)     #in /ryu/ryu/base/app_manager.py
         self.event_handlers = {}        # ev_cls -> handlers:list     #字典，能處理_event_loop中的事件的函數都放在這
         self.observers = {}     # ev_cls -> observer-name -> states:set      #字典，會對這個class實例產生的事件感興趣的實例存在這
         #########上面是應用之間關連的問題
-        self.threads = []
+        self.threads = []           #儲存線程
         self.main_thread = None
-        self.events = hub.Queue(128)
+        self.events = hub.Queue(128)          #存放發送至本實例的所有事件
         self._events_sem = hub.BoundedSemaphore(self.events.maxsize)
-        if hasattr(self.__class__, 'LOGGER_NAME'):
+        if hasattr(self.__class__, 'LOGGER_NAME'):         #紀錄誌
             self.logger = logging.getLogger(self.__class__.LOGGER_NAME)
         else:
             self.logger = logging.getLogger(self.name)
-        self.CONF = cfg.CONF
+        self.CONF = cfg.CONF         #全局配置
 
         # prevent accidental creation of instances of this class outside RyuApp
-        class _EventThreadStop(event.EventBase):
+        class _EventThreadStop(event.EventBase):          #內部使用，通知線程中止
             pass
         self._event_stop = _EventThreadStop()
-        self.is_active = True  
+        self.is_active = True      #線程結束: True
+  
+  def start(self):       #啟動線程，由_event_loop處理，_event_loop 函數會不停處理送至的事件
+        """
+        Hook that is called after startup initialization is done.
+        """
+        self.threads.append(hub.spawn(self._event_loop))
+
+    def stop(self):
+        if self.main_thread:
+            hub.kill(self.main_thread)
+        self.is_active = False
+        self._send_event(self._event_stop, None)
+        hub.joinall(self.threads)
+
+    def set_main_thread(self, thread):
+        """
+        Set self.main_thread so that stop() can terminate it.
+
+        Only AppManager.instantiate_apps should call this function.
+        """
+        self.main_thread = thread
+
+    def register_handler(self, ev_cls, handler):
+        assert callable(handler)
+        self.event_handlers.setdefault(ev_cls, [])
+        self.event_handlers[ev_cls].append(handler)
+
+    def unregister_handler(self, ev_cls, handler):
+        assert callable(handler)
+        self.event_handlers[ev_cls].remove(handler)
+        if not self.event_handlers[ev_cls]:
+            del self.event_handlers[ev_cls]
+
+    def register_observer(self, ev_cls, name, states=None):
+        states = states or set()
+        ev_cls_observers = self.observers.setdefault(ev_cls, {})
+        ev_cls_observers.setdefault(name, set()).update(states)
+
+    def unregister_observer(self, ev_cls, name):
+        observers = self.observers.get(ev_cls, {})
+        observers.pop(name)
+
+    def unregister_observer_all_event(self, name):
+        for observers in self.observers.values():
+            observers.pop(name, None)
+
+    def observe_event(self, ev_cls, states=None):
+        brick = _lookup_service_brick_by_ev_cls(ev_cls)
+        if brick is not None:
+            brick.register_observer(ev_cls, self.name, states)
+
+    def unobserve_event(self, ev_cls):
+        brick = _lookup_service_brick_by_ev_cls(ev_cls)
+        if brick is not None:
+            brick.unregister_observer(ev_cls, self.name)
