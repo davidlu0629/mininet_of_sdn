@@ -1,2 +1,32 @@
 class RyuApp(object)     #in /ryu/ryu/base/app_manager.py
   _CONTEXTS= {}     #字典，用來裝初始化用的類別
+  
+  _EVENT= []      #因為執行而呼叫的其他類別的事件會存在這
+  
+  OFP_VERSIONS = None      #app可以運行的OpenFlow版本
+  
+  @classmethod
+  def context_iteritems(cls):
+        return iter(cls._CONTEXTS.items())      #Return iterator over the (key, contxt class) of application context
+    
+  def __init__(self, *_args, **_kwargs):
+        super(RyuApp, self).__init__()
+        self.name = self.__class__.__name__      #app名
+        self.event_handlers = {}        # ev_cls -> handlers:list     #字典，能處理_event_loop中的事件的函數都放在這
+        self.observers = {}     # ev_cls -> observer-name -> states:set      #字典，會對這個class實例產生的事件感興趣的實例存在這
+        #########上面是應用之間關連的問題
+        self.threads = []
+        self.main_thread = None
+        self.events = hub.Queue(128)
+        self._events_sem = hub.BoundedSemaphore(self.events.maxsize)
+        if hasattr(self.__class__, 'LOGGER_NAME'):
+            self.logger = logging.getLogger(self.__class__.LOGGER_NAME)
+        else:
+            self.logger = logging.getLogger(self.name)
+        self.CONF = cfg.CONF
+
+        # prevent accidental creation of instances of this class outside RyuApp
+        class _EventThreadStop(event.EventBase):
+            pass
+        self._event_stop = _EventThreadStop()
+        self.is_active = True  
