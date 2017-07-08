@@ -1,1 +1,2 @@
-
+class RyuApp(object)     #in /ryu/ryu/base/app_manager.py
+  _CONTEXTS= {}     #字典，用來裝初始化用的類別
