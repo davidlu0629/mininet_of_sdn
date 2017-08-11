@@ -1,5 +1,5 @@
 mininet 基本建構方式
-執行mininet: sudo mn --topo single,3 --mac --switch ovsk --controller remote -x 
+執行mininet: sudo mn --topo single,3 --mac --switch ovsk --controller remote(,ip=xxx.xxx.xxx.xxx,port=xxxx) -x 
 (-x 讓xterm可以執行 讓我們可以對各個拓樸上的node操作)
 
 s1:
