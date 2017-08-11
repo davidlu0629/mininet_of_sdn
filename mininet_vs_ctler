@@ -9,7 +9,7 @@ s1:
 觀看switch的flow table: ovs-ofctl -O OpenFlow13 dump-flows s1
 
 建構controller c0:
-ryu -manager --verbose ryu.app.simple_switch_13
+ryu-manager --verbose ryu.app.simple_switch_13
 (simple_switch_13可以建構OF13版本的controller address:127.0.0.1(default))
 
 h1, h2, h3:
