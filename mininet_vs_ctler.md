@@ -17,3 +17,6 @@ h1, h2, h3:
 
 mininet:
 host互ping: h1 ping -c1 h2 
+
+###當要改變ryu的檔案內容時
+  sudo python setup.py install
